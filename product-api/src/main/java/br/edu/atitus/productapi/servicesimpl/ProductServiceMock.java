@@ -61,7 +61,7 @@ public Page<ProductResponse> findAll(Pageable pageable, String targetCurrency) t
                     promotionMessage,
                     targetCurrency,
                     0
-            ))
+                    ))
             .toList();
 
     // 2. Calcula a fatia manual baseada no Pageable recebido
