@@ -31,33 +31,66 @@ public class CurrencyServiceJpa implements CurrencyService {
 
         String sourceUpper = sourceCurrency.toUpperCase();
         String targetUpper = targetCurrency.toUpperCase();
+        String data = "10-13-2026";
 
-        // 1. Tenta consultar a API do BCB
         try {
-            BcbResponse bcb = bcbClientService.getCotacao(sourceUpper, "10-13-2026");
-            if (bcb != null && bcb.value() != null && !bcb.value().isEmpty()) {
-                Double cotacao = bcb.value().get(0).cotacaoCompra();
-                if (cotacao != null) {
-                    return new CurrencyResponse(
-                            sourceUpper,
-                            targetUpper,
-                            cotacao,
-                            "Currency API running in Port: " + serverPort + " - Fonte: BCB"
-                    );
-                }
+            // Caso especial: BRL → BRL
+            if (sourceUpper.equals("BRL") && targetUpper.equals("BRL")) {
+                return new CurrencyResponse(
+                        sourceUpper,
+                        targetUpper,
+                        1.0,
+                        "Currency API running in Port: " + serverPort + " - Fonte: BCB"
+                );
             }
+
+            // Obtém a cotação da moeda de origem em relação ao BRL
+            Double cotacaoSource = sourceUpper.equals("BRL")
+                    ? 1.0
+                    : getCotacaoBcb(sourceUpper, data);
+
+            // Obtém a cotação da moeda de destino em relação ao BRL
+            Double cotacaoTarget = targetUpper.equals("BRL")
+                    ? 1.0
+                    : getCotacaoBcb(targetUpper, data);
+
+            // Calcula a taxa de conversão entre as duas moedas
+            Double conversionRate = cotacaoSource / cotacaoTarget;
+
+            return new CurrencyResponse(
+                    sourceUpper,
+                    targetUpper,
+                    conversionRate,
+                    "Currency API running in Port: " + serverPort + " - Fonte: BCB"
+            );
+
         } catch (Exception e) {
-            // Fallback: ignora o erro e tenta o banco local
+            // Fallback: consulta o banco local
+            var currency = repository.findBySourceCurrencyAndTargetCurrency(
+                    sourceUpper,
+                    targetUpper
+            ).orElseThrow(() ->
+                    new EntityNotFoundException("Cotação não encontrada")
+            );
+
+            return CurrencyResponse.fromEntity(
+                    currency,
+                    "Currency API running in Port: " + serverPort + " - Fonte: Banco Local"
+            );
         }
+    }
 
-        // 2. Fallback: consulta o banco local
-        var currency = repository.findBySourceCurrencyAndTargetCurrency(
-                sourceUpper,
-                targetUpper
-        ).orElseThrow(() ->
-                new EntityNotFoundException("Cotação não encontrada")
-        );
-
-        return CurrencyResponse.fromEntity(currency, "Currency API running in Port: " + serverPort + " - Fonte: Banco Local");
+     //Obtém a cotação de uma moeda em relação ao BRL via BCB.
+     //Lança exceção se a cotação não estiver disponível.
+    private Double getCotacaoBcb(String moeda, String data) {
+        BcbResponse bcb = bcbClientService.getCotacao(moeda, data);
+        if (bcb == null || bcb.value() == null || bcb.value().isEmpty()) {
+            throw new RuntimeException("Cotação não encontrada no BCB para " + moeda);
+        }
+        Double cotacao = bcb.value().get(0).cotacaoCompra();
+        if (cotacao == null) {
+            throw new RuntimeException("Cotação nula no BCB para " + moeda);
+        }
+        return cotacao;
     }
 }
