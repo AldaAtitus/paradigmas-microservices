@@ -24,6 +24,19 @@ consul kv put config/currency-api/spring.datasource.username "postgres"
 consul kv put config/currency-api/spring.datasource.password "postgresql"
 
 REM ============================================
+REM Configuracoes do auth-api
+REM ============================================
+consul kv put config/auth-api/server.port "8200"
+consul kv put config/auth-api/spring.datasource.url "jdbc:postgresql://localhost/db_user"
+consul kv put config/auth-api/spring.datasource.username "postgres"
+consul kv put config/auth-api/spring.datasource.password "postgresql"
+
+REM ============================================
+REM Configuracoes do gateway-api  <-- ADICIONAR AQUI
+REM ============================================
+consul kv put config/gateway-api/server.port "8080"
+
+REM ============================================
 REM Configuracoes gerais de monitoramento (todos os microservicos)
 REM ============================================
 consul kv put config/application/management.endpoints.web.exposure.include "*"

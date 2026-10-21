@@ -37,7 +37,17 @@ public ProductEntity save(ProductRequest dto) throws Exception {
     return null;
 }
 
-@Override
+    @Override
+    public ProductEntity update(Long id, ProductRequest request) throws Exception {
+        return null;
+    }
+
+    @Override
+    public void delete(Long id) throws Exception {
+
+    }
+
+    @Override
 public ProductResponse findById(Long id, String targetcurrency) throws Exception {
     ProductEntity product = database.stream()
             .filter(item -> item.getId().equals(id))

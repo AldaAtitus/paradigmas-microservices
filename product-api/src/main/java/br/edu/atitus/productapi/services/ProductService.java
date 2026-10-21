@@ -12,4 +12,6 @@ public interface ProductService {
     ProductResponse findById(Long id, String targetCurrency) throws Exception;
     Page<ProductResponse> findAll(Pageable pageable, String targetCurrency) throws Exception;
     ProductEntity save(ProductRequest request) throws Exception;
+    ProductEntity update(Long id, ProductRequest request) throws Exception;
+    void delete(Long id) throws Exception;
 }
