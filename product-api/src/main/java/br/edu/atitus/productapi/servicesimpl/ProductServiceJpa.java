@@ -84,7 +84,7 @@ public class ProductServiceJpa implements ProductService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Modelo inválido");
         if (request.description() == null || request.description().isBlank())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Descrição inválida");
-        if (request.price() <= 0)
+        if (request.price() < 0)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Preço inválido");
         if (request.currency() == null || request.currency().isBlank())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Moeda inválida");
