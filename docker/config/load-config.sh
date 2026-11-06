@@ -33,7 +33,7 @@ put "config/application/management.health.db.enabled" "true"
 put "config/product-api/server.port" "8000"
 put "config/product-api/spring.datasource.url" "jdbc:postgresql://product-db:5432/db_product"
 put "config/product-api/spring.datasource.username" "postgres"
-put "config/product-api/spring.datasource.password" "postgres"
+put "config/product-api/spring.datasource.password" "postgresql"
 put "config/product-api/app.promotion.message" "Promoção Semana do Cliente"
 
 # Resilience4j - Retry
@@ -64,7 +64,7 @@ put "config/product-api/resilience4j.circuitbreaker.circuit-breaker-aspect-order
 put "config/currency-api/server.port" "8100"
 put "config/currency-api/spring.datasource.url" "jdbc:postgresql://currency-db:5432/db_currency"
 put "config/currency-api/spring.datasource.username" "postgres"
-put "config/currency-api/spring.datasource.password" "postgres"
+put "config/currency-api/spring.datasource.password" "postgresql"
 
 # Resilience4j - Retry (BCB)
 put "config/currency-api/resilience4j.retry.instances.bcb.max-attempts" "3"
@@ -92,7 +92,15 @@ put "config/currency-api/resilience4j.circuitbreaker.circuit-breaker-aspect-orde
 put "config/auth-api/server.port" "8200"
 put "config/auth-api/spring.datasource.url" "jdbc:postgresql://auth-db:5432/db_user"
 put "config/auth-api/spring.datasource.username" "postgres"
-put "config/auth-api/spring.datasource.password" "postgres"
+put "config/auth-api/spring.datasource.password" "postgresql"
+
+# ============================================
+# ORDER API
+# ============================================
+put "config/order-api/server.port" "8300"
+put "config/order-api/spring.datasource.url" "jdbc:postgresql://order-db:5432/db_order"
+put "config/order-api/spring.datasource.username" "postgres"
+put "config/order-api/spring.datasource.password" "postgresql"
 
 # ============================================
 # GATEWAY API
