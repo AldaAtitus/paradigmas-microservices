@@ -43,12 +43,7 @@ services:
     environment:
       POSTGRES_DB: db_product
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      CLOUDFLARE_R2_ENDPOINT: "https://bc2a529e49754327d5a897ea03c422b6.r2.cloudflarestorage.com"
-      CLOUDFLARE_R2_ACCESS_KEY: "93f6a86c0f9e854e6555cd2db89bcf74"
-      CLOUDFLARE_R2_SECRET_KEY: "858bb38b11546570c1ca932f286f9e309ec612709f2e62e514ecc2bfd2258548"
-      CLOUDFLARE_R2_BUCKET: "product-images"
-      CLOUDFLARE_R2_PUBLIC_URL: "https://pub-ae45f3213b4f400cace9a48dcf0e6f3b.r2.dev"
+      POSTGRES_PASSWORD: postgresql
     volumes:
       - product_data:/var/lib/postgresql/data
     healthcheck:
@@ -68,7 +63,7 @@ services:
     environment:
       POSTGRES_DB: db_currency
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: postgresql
     volumes:
       - currency_data:/var/lib/postgresql/data
     healthcheck:
@@ -88,7 +83,7 @@ services:
     environment:
       POSTGRES_DB: db_user
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: postgresql
     volumes:
       - auth_data:/var/lib/postgresql/data
     healthcheck:
@@ -108,7 +103,7 @@ services:
     environment:
       POSTGRES_DB: db_order
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: postgresql
     volumes:
       - order_data:/var/lib/postgresql/data
     healthcheck:
@@ -132,6 +127,11 @@ services:
       SPRING_CONFIG_IMPORT: "consul:"
       SPRING_CLOUD_CONSUL_HOST: consul
       SPRING_CLOUD_CONSUL_PORT: "8500"
+      CLOUDFLARE_R2_ENDPOINT: "https://bc2a529e49754327d5a897ea03c422b6.r2.cloudflarestorage.com"
+      CLOUDFLARE_R2_ACCESS_KEY: "93f6a86c0f9e854e6555cd2db89bcf74"
+      CLOUDFLARE_R2_SECRET_KEY: "858bb38b11546570c1ca932f286f9e309ec612709f2e62e514ecc2bfd2258548"
+      CLOUDFLARE_R2_BUCKET: "product-images"
+      CLOUDFLARE_R2_PUBLIC_URL: "https://pub-ae45f3213b4f400cace9a48dcf0e6f3b.r2.dev"
     depends_on:
       consul-config:
         condition: service_completed_successfully
@@ -223,6 +223,96 @@ services:
       - backend
     restart: unless-stopped
 
+  # ============================================
+  # ZIPKIN - DISTRIBUTED TRACING
+  # ============================================
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    restart: unless-stopped
+    networks:
+      - backend
+
+  # ============================================
+  # PROMETHEUS - METRICS COLLECTION
+  # ============================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+    networks:
+      - backend
+
+  # ============================================
+  # LOKI - LOG AGGREGATION
+  # ============================================
+  loki:
+    image: grafana/loki:3.7.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/config.yml
+    restart: unless-stopped
+    networks:
+      - backend
+
+  # ============================================
+  # GRAFANA ALLOY - LOG COLLECTION
+  # ============================================
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    ports:
+      - "12345:12345"
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - alloy_data:/var/lib/alloy/data
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    depends_on:
+      - loki
+    restart: unless-stopped
+    networks:
+      - backend
+
+  # ============================================
+  # GRAFANA - OBSERVABILITY DASHBOARD
+  # ============================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+      - zipkin
+    restart: unless-stopped
+    networks:
+      - backend
+
 # ============================================
 # REDE E VOLUMES
 # ============================================
@@ -235,3 +325,7 @@ volumes:
   currency_data:
   auth_data:
   order_data:
+  prometheus_data:
+  loki_data:
+  alloy_data:
+  grafana_data:

@@ -28,6 +28,13 @@ put "config/application/management.health.readinessstate.enabled" "true"
 put "config/application/management.health.db.enabled" "true"
 
 # ============================================
+# OBSERVABILIDADE - MÉTRICAS E TRACING
+# ============================================
+put "config/application/management.prometheus.metrics.export.enabled" "true"
+put "config/application/management.tracing.sampling.probability" "1.0"
+put "config/application/management.zipkin.tracing.endpoint" "http://zipkin:9411/api/v2/spans"
+
+# ============================================
 # PRODUCT API
 # ============================================
 put "config/product-api/server.port" "8000"
