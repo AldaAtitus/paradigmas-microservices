@@ -1,11 +1,9 @@
 package br.edu.atitus.productapi.dtos;
 
 public record ProductRequest(
-        String brand,
-        String model,
+        String title,
         String description,
-        String currency,
         double price,
-        String image
-) {
-}
+        Long categoryId,
+        String imageUrl
+) {}

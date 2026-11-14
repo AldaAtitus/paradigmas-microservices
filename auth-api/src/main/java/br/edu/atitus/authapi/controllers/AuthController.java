@@ -10,7 +10,6 @@ import br.edu.atitus.authapi.services.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.web.bind.annotation.*;
@@ -23,10 +22,12 @@ public class AuthController {
 
     private final UserService userService;
     private final AuthenticationConfiguration authConfig;
+    private final JwtUtil jwtUtil;
 
-    public AuthController(UserService userService, AuthenticationConfiguration authConfig) {
+    public AuthController(UserService userService, AuthenticationConfiguration authConfig, JwtUtil jwtUtil) {
         this.userService = userService;
         this.authConfig = authConfig;
+        this.jwtUtil = jwtUtil;
     }
 
     private UserEntity convertDTO2Entity(SignupRequestDto dto) {
@@ -38,29 +39,34 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<UserEntity> signup(@RequestBody SignupRequestDto dto) throws Exception {
         var user = convertDTO2Entity(dto);
-        user.setType(UserType.Common);
+
+        user.setType(dto.type() != null ? dto.type() : UserType.BUYER);
+
         userService.save(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
+
     @PostMapping("/signin")
     public ResponseEntity<SigninResponseDto> PostSignin(@RequestBody SigninRequestDto signin) throws AuthenticationException, Exception {
         authConfig.getAuthenticationManager()
                 .authenticate(new UsernamePasswordAuthenticationToken(signin.email(), signin.password()));
-        UserEntity user = (UserEntity) userService.loadUserByUsername(signin.email());
-        SigninResponseDto response = new SigninResponseDto(user, JwtUtil.generateToken(user.getEmail(), user.getId(), user.getType()));
-        return ResponseEntity.ok(response);
 
+        UserEntity user = (UserEntity) userService.loadUserByUsername(signin.email());
+
+        SigninResponseDto response = new SigninResponseDto(user, jwtUtil.generateToken(user.getEmail(), user.getId(), user.getType()));
+
+        return ResponseEntity.ok(response);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
-        String cleanMessage = e.getMessage().replaceAll("[\\r\\n]", " ");
+        String cleanMessage = e.getMessage() != null ? e.getMessage().replaceAll("[\\r\\n]", " ") : "Erro interno";
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(cleanMessage);
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<String> handleException(AuthenticationException e) {
-        String cleanMessage = e.getMessage().replaceAll("[\\r\\n]", " ");
+        String cleanMessage = e.getMessage() != null ? e.getMessage().replaceAll("[\\r\\n]", " ") : "Erro de autenticação";
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(cleanMessage);
     }
 }

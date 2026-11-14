@@ -12,4 +12,10 @@ public class AuthorizationService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário sem permissão para esta operação");
         }
     }
+
+    public void requireSellerOrAdmin(Integer userType) {
+        if (userType == null || (userType != 0 && userType != 2)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas vendedores ou administradores podem realizar esta operação");
+        }
+    }
 }

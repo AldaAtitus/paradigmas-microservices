@@ -124,7 +124,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      SPRING_CONFIG_IMPORT: "consul:"
+      SPRING_CONFIG_IMPORT: "optional:consul:"
       SPRING_CLOUD_CONSUL_HOST: consul
       SPRING_CLOUD_CONSUL_PORT: "8500"
       CLOUDFLARE_R2_ENDPOINT: "https://bc2a529e49754327d5a897ea03c422b6.r2.cloudflarestorage.com"
@@ -139,6 +139,11 @@ services:
         condition: service_healthy
     networks:
       - backend
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   # ============================================
   # CURRENCY API
@@ -150,7 +155,7 @@ services:
     ports:
       - "8100:8100"
     environment:
-      SPRING_CONFIG_IMPORT: "consul:"
+      SPRING_CONFIG_IMPORT: "optional:consul:"
       SPRING_CLOUD_CONSUL_HOST: consul
       SPRING_CLOUD_CONSUL_PORT: "8500"
     depends_on:
@@ -171,7 +176,7 @@ services:
     ports:
       - "8200:8200"
     environment:
-      SPRING_CONFIG_IMPORT: "consul:"
+      SPRING_CONFIG_IMPORT: "optional:consul:"
       SPRING_CLOUD_CONSUL_HOST: consul
       SPRING_CLOUD_CONSUL_PORT: "8500"
     depends_on:
@@ -192,7 +197,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_CONFIG_IMPORT: "consul:"
+      SPRING_CONFIG_IMPORT: "optional:consul:"
       SPRING_CLOUD_CONSUL_HOST: consul
       SPRING_CLOUD_CONSUL_PORT: "8500"
     depends_on:
@@ -211,7 +216,7 @@ services:
     ports:
       - "8300:8300"
     environment:
-      SPRING_CONFIG_IMPORT: "consul:"
+      SPRING_CONFIG_IMPORT: "optional:consul:"
       SPRING_CLOUD_CONSUL_HOST: consul
       SPRING_CLOUD_CONSUL_PORT: "8500"
     depends_on:
@@ -219,9 +224,18 @@ services:
         condition: service_completed_successfully
       order-db:
         condition: service_healthy
+      product-api:
+        condition: service_healthy
+      currency-api:
+        condition: service_healthy
     networks:
       - backend
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8300/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   # ============================================
   # ZIPKIN - DISTRIBUTED TRACING

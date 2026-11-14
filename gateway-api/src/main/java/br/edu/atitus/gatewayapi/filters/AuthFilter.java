@@ -19,6 +19,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
     private static final List<String> PROTECTED_ROUTES = List.of("/ws/");
     private static final List<String> USER_HEADERS = List.of("X-User-Id", "X-User-Type", "X-User-Email");
+    private final JwtUtil jwtUtil;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -46,21 +47,23 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         String jwt = authHeader.substring(7);
-        Claims claims = JwtUtil.validateToken(jwt);
+        Claims claims = jwtUtil.validateToken(jwt);
         if (claims == null) {
             exchange.getResponse().setStatusCode(HttpStatusCode.valueOf(401));
             return exchange.getResponse().setComplete();
         }
 
         // 5. Extrai dados do usuário e propaga via headers
-        Long userId = claims.get("id", Long.class);
-        Integer userType = claims.get("type", Integer.class);
+        Number userIdNum = claims.get("id", Number.class);
+        Number userTypeNum = claims.get("type", Number.class);
         String email = claims.get("email", String.class);
 
-        if (userId == null || userType == null || email == null) {
+        if (userIdNum == null || userTypeNum == null || email == null) {
             exchange.getResponse().setStatusCode(HttpStatusCode.valueOf(401));
             return exchange.getResponse().setComplete();
         }
+        Long userId = userIdNum.longValue();
+        Integer userType = userTypeNum.intValue();
 
         ServerHttpRequest authenticatedRequest = sanitizedRequest.mutate()
                 .headers(headers -> {
@@ -71,6 +74,9 @@ public class AuthFilter implements GlobalFilter, Ordered {
                 .build();
 
         return chain.filter(exchange.mutate().request(authenticatedRequest).build());
+    }
+    public AuthFilter(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
     }
 
     @Override

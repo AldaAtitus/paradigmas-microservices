@@ -30,9 +30,21 @@ put "config/application/management.health.db.enabled" "true"
 # ============================================
 # OBSERVABILIDADE - MÉTRICAS E TRACING
 # ============================================
+
+# Identificação das aplicações
 put "config/application/management.prometheus.metrics.export.enabled" "true"
+
+# Tracing
+put "config/application/management.tracing.enabled" "true"
 put "config/application/management.tracing.sampling.probability" "1.0"
-put "config/application/management.zipkin.tracing.endpoint" "http://zipkin:9411/api/v2/spans"
+
+# Exportação dos traces para Zipkin
+put "config/application/management.tracing.export.zipkin.endpoint" "http://zipkin:9411/api/v2/spans"
+
+# ============================================
+# JWT SECRET (Compartilhado)
+# ============================================
+put "config/application/jwt.secret" "chaveSuperSecretaParaJWTdeExemplo!@#123"
 
 # ============================================
 # PRODUCT API

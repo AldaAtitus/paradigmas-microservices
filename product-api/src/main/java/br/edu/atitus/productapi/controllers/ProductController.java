@@ -31,10 +31,13 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<Page<ProductResponse>> getAll(
-            @RequestParam String targetCurrency,
-            @PageableDefault(size = 10, sort = "description",page = 0)Pageable pageable
-            ) throws Exception {
-        var response = service.findAll(pageable, targetCurrency);
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String targetCurrency,
+            @PageableDefault(size = 10, sort = "title", page = 0) Pageable pageable
+    ) throws Exception {
+        String currency = targetCurrency != null ? targetCurrency : "BRL";
+        var response = service.findAll(pageable, categoryId, query, currency);
         return ResponseEntity.ok(response);
     }
 

@@ -12,6 +12,8 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.MediaType;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/ws/products")
 public class WsProductController {
@@ -36,32 +38,32 @@ public class WsProductController {
             @RequestHeader("X-User-Email") String userEmail,
             @RequestHeader("X-User-Type") Integer userType) throws Exception {
 
-        // Valida se o usuário é administrador
-        authService.requireAdmin(userType);
+        authService.requireSellerOrAdmin(userType);
 
-        var product = service.save(dto);
+        var product = service.save(dto, userId);
         return ResponseEntity.status(201).body(product);
     }
+
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> uploadImage(
+    public ResponseEntity<Map<String, String>> uploadImage(
             @RequestParam("file") MultipartFile file,
             @RequestHeader("X-User-Type") Integer userType) throws Exception {
 
-        authService.requireAdmin(userType); // Apenas Admin pode subir imagens
-
+        authService.requireSellerOrAdmin(userType);
         String url = storageService.upload(file);
-        return ResponseEntity.ok(url); // Retorna a URL pública (ex: https://pub-xxx.r2.dev/arquivo.png)
+        return ResponseEntity.ok(Map.of("url", url));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ProductEntity> updateProduct(
             @PathVariable Long id,
             @RequestBody ProductRequest dto,
+            @RequestHeader("X-User-Id") Long userId,
             @RequestHeader("X-User-Type") Integer userType) throws Exception {
 
-        authService.requireAdmin(userType); // Garante que só admin passa
-        var product = service.update(id, dto);
-        return ResponseEntity.ok().build(); // Exemplo
+        authService.requireSellerOrAdmin(userType);
+        var product = service.update(id, dto, userId);
+        return ResponseEntity.ok(product);
     }
 
     @DeleteMapping("/{id}")
